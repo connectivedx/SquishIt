@@ -8,7 +8,7 @@ using SquishIt.Framework.Utilities;
 using SquishIt.Framework.Css;
 using SquishIt.Framework.Files;
 
-namespace SquishIt.Framework.UI.WebControls
+namespace SquishIt.WebForms.UI.WebControls
 {
 	[ParseChildren(typeof(CssFile), DefaultProperty="Files", ChildrenAsProperties=true)]
 	[PersistChildren(false)]

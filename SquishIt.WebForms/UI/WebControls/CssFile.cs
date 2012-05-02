@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace SquishIt.Framework.UI.WebControls
+namespace SquishIt.WebForms.UI.WebControls
 {
 	public class CssFile
 	{
