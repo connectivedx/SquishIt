@@ -30,7 +30,7 @@ namespace SquishIt.WebForms.UI.WebControls
         bool? _debug;
 
 		public bool ProcessImports { get; set; }
-		public List<CssFile> Files { get; set; }
+		public virtual List<CssFile> Files { get; set; }
 
 		public CssBundle()
 		{

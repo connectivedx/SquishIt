@@ -27,7 +27,7 @@ namespace SquishIt.WebForms.UI.WebControls
             set { _debug = value; }
         }
         bool? _debug;
-		public List<JsFile> Files { get; set; }
+		public virtual List<JsFile> Files { get; set; }
 
 		public JsBundle()
 		{

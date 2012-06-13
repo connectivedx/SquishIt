@@ -42,6 +42,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="UI\WebControls\JsFolder.cs" />
+    <Compile Include="UI\WebControls\CssFolder.cs" />
     <Compile Include="UI\WebControls\CssBundle.cs" />
     <Compile Include="UI\WebControls\CssFile.cs" />
     <Compile Include="UI\WebControls\JsBundle.cs" />
