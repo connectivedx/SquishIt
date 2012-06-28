@@ -25,9 +25,12 @@ namespace SquishIt.WebForms.UI.WebControls
 				var rootPath = Context.Server.MapPath(FolderPath);
 
 				var fileNames = Directory.GetFiles(rootPath);
+				string extension;
 				foreach (var fileName in fileNames)
 				{
-					files.Add(new JsFile() { Path = string.Concat(FolderPath, "/", Path.GetFileName(fileName)) });
+					extension = Path.GetExtension(fileName);
+					if (extension.Equals(".js", StringComparison.OrdinalIgnoreCase) || extension.Equals(".coffee", StringComparison.OrdinalIgnoreCase))
+						files.Add(new JsFile() { Path = string.Concat(FolderPath, "/", Path.GetFileName(fileName)) });
 				}
 
 				return files;

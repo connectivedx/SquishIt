@@ -25,9 +25,12 @@ namespace SquishIt.WebForms.UI.WebControls
 				var rootPath = Context.Server.MapPath(FolderPath);
 
 				var fileNames = Directory.GetFiles(rootPath);
+				string extension;
 				foreach (var fileName in fileNames)
 				{
-					files.Add(new CssFile() { Path = string.Concat(FolderPath, "/", Path.GetFileName(fileName)) });
+					extension = Path.GetExtension(fileName);
+					if(extension.Equals(".css", StringComparison.OrdinalIgnoreCase) || extension.Equals(".less", StringComparison.OrdinalIgnoreCase))
+						files.Add(new CssFile() { Path = string.Concat(FolderPath, "/", Path.GetFileName(fileName)) });
 				}
 
 				return files;
