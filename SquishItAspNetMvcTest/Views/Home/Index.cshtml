@@ -1,0 +1,27 @@
+﻿@using SquishIt.Framework
+@{
+    ViewBag.Title = "SquishIt-Mvc";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<h3>Features:</h3>
+<ul>
+    <li>@Html.ActionLink("Minify Css", "MinifyCss", "Features")</li>
+    <li>@Html.ActionLink("Minify Js", "MinifyJs", "Features")</li>
+    <li>@Html.ActionLink("Render Named", "RenderNamed", "Features")</li>
+    <li>@Html.ActionLink("Css Imports", "Imports", "Features")</li>
+    <li>@Html.ActionLink("Folders", "Folders", "Features")</li>
+    <li>@Html.ActionLink("RecursiveFolders", "RecursiveFolders", "Features")</li>
+</ul>
+
+
+<h3>Preprocessors:</h3>
+<ul>
+    <li>@Html.ActionLink("Hogan", "Hogan", "Preprocessors")</li>
+    <li>@Html.ActionLink("Coffeescript", "Coffee", "Preprocessors")</li>
+    <li>@Html.ActionLink("Less", "Less", "Preprocessors")</li>
+    <li>@Html.ActionLink("Sass", "Sass", "Preprocessors")</li>
+</ul>
+@section JavaScript {
+
+}

@@ -12,14 +12,12 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SquishItAspNetTest</RootNamespace>
     <AssemblyName>SquishItAspNetTest</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <OldToolsVersion>4.0</OldToolsVersion>
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <UseIISExpress>false</UseIISExpress>
-    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -46,7 +44,6 @@
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Web.ApplicationServices" />
     <Reference Include="System.Web.DynamicData" />
-    <Reference Include="System.Web.Entity" />
     <Reference Include="System.Web.Extensions" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Web" />
@@ -54,7 +51,6 @@
     <Reference Include="System.Configuration" />
     <Reference Include="System.Web.Services" />
     <Reference Include="System.EnterpriseServices" />
-    <Reference Include="System.Web.Mobile" />
     <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
@@ -124,6 +120,10 @@
     <ProjectReference Include="..\SquishIt.Framework\SquishIt.Framework.csproj">
       <Project>{50C3BC24-E534-4B78-8E8E-CB2C4053321D}</Project>
       <Name>SquishIt.Framework</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SquishIt.Less\SquishIt.Less.csproj">
+      <Project>{A8E60378-569B-4BAA-B344-75A065796E20}</Project>
+      <Name>SquishIt.Less</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

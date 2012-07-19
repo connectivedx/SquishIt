@@ -6,8 +6,14 @@ _ReSharper*
 *.pidb
 test-results/
 *.userprefs
+*.dotCover
+
+#combined files from AspNetTest
 SquishItAspNetTest/css/combined*
 SquishItAspNetTest/js/combined*
 SquishItAspNetTest/js/output*
-*.dotCover
-
+SquishItAspNetTest/combined*
+SquishItAspNetMvcTest/templates/templates_*
+*.squishit.debug.css
+*.squishit.debug.js
+SquishItAspNetMvcTest/output/

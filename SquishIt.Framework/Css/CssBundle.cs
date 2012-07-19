@@ -1,13 +1,10 @@
-using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using dotless.Core;
 using SquishIt.Framework.Base;
 using SquishIt.Framework.Minifiers;
-using SquishIt.Framework.Minifiers.CSS;
 using SquishIt.Framework.Resolvers;
 using SquishIt.Framework.Files;
 using SquishIt.Framework.Utilities;
@@ -16,15 +13,15 @@ namespace SquishIt.Framework.Css
 {
     public class CSSBundle : BundleBase<CSSBundle>
     {
-        private readonly static Regex IMPORT_PATTERN = new Regex(@"@import +url\(([""']){0,1}(.*?)\1{0,1}\);", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private const string CSS_TEMPLATE = "<link rel=\"stylesheet\" type=\"text/css\" {0}href=\"{1}\" />";
-        private const string CACHE_PREFIX = "css";
-        private const string TAG_FORMAT = "<style type=\"text/css\">{0}</style>";
+        readonly static Regex IMPORT_PATTERN = new Regex(@"@import +url\(([""']){0,1}(.*?)\1{0,1}\);", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        const string CSS_TEMPLATE = "<link rel=\"stylesheet\" type=\"text/css\" {0}href=\"{1}\" />";
+        const string CACHE_PREFIX = "css";
+        const string TAG_FORMAT = "<style type=\"text/css\">{0}</style>";
 
-        private bool ShouldImport { get; set; }
-        private bool ShouldAppendHashForAssets { get; set; }
+        bool ShouldImport { get; set; }
+        bool ShouldAppendHashForAssets { get; set; }
 
-        
+
         protected override string Template
         {
             get { return CSS_TEMPLATE; }
@@ -37,19 +34,27 @@ namespace SquishIt.Framework.Css
 
         protected override IMinifier<CSSBundle> DefaultMinifier
         {
-            get { return Configuration.DefaultCssMinifier(); }
+            get { return Configuration.Instance.DefaultCssMinifier(); }
         }
 
-        private HashSet<string> _allowedExtensions = new HashSet<string> { ".CSS", ".LESS" };
-
-        protected override HashSet<string> allowedExtensions
+        protected override IEnumerable<string> allowedExtensions
         {
-            get { return _allowedExtensions; }
+            get { return bundleState.AllowedExtensions.Union(Bundle.AllowedGlobalExtensions.Union(Bundle.AllowedStyleExtensions)); }
+        }
+
+        protected override IEnumerable<string> disallowedExtensions
+        {
+            get { return Bundle.AllowedScriptExtensions; }
+        }
+
+        protected override string defaultExtension
+        {
+            get { return ".CSS"; }
         }
 
         protected override string tagFormat
         {
-            get { return typeless ? TAG_FORMAT.Replace(" type=\"text/css\"", "") : TAG_FORMAT; }
+            get { return bundleState.Typeless ? TAG_FORMAT.Replace(" type=\"text/css\"", "") : TAG_FORMAT; }
         }
 
         public CSSBundle()
@@ -67,37 +72,7 @@ namespace SquishIt.Framework.Css
         {
         }
 
-        private string ProcessLess(string file)
-        {
-            lock (typeof(CSSBundle))
-            {
-                try
-                {
-                    var dir = Path.GetDirectoryName(file);
-                    currentDirectoryWrapper.SetCurrentDirectory(dir);
-                    var content = ReadFile(file);
-                    var engineFactory = new EngineFactory();
-                    var engine = engineFactory.GetEngine();
-                    var css = engine.TransformToCss(content, file);
-
-                    var appPath = FileSystem.ResolveFileSystemPathToAppRelative(dir);
-                    var importPaths = engine.GetImports();
-                    foreach (var importPath in importPaths)
-                    {
-                        var import = FileSystem.ResolveAppRelativePathToFileSystem(Path.Combine(appPath, importPath));
-                        DependentFiles.Add(import);
-                    }
-
-                    return css;
-                }
-                finally
-                {
-                    currentDirectoryWrapper.Revert();
-                }
-            }
-        }
-
-        private string ProcessImport(string file, string outputFile, string css)
+        string ProcessImport(string file, string outputFile, string css)
         {
             var sourcePath = FileSystem.ResolveFileSystemPathToAppRelative(Path.GetDirectoryName(file)) + "/";
 
@@ -105,7 +80,7 @@ namespace SquishIt.Framework.Css
             {
                 var importPath = match.Groups[2].Value;
                 string import;
-                if (importPath.StartsWith("/"))
+                if(importPath.StartsWith("/"))
                 {
                     import = FileSystem.ResolveAppRelativePathToFileSystem(importPath);
                 }
@@ -113,7 +88,7 @@ namespace SquishIt.Framework.Css
                 {
                     import = FileSystem.ResolveAppRelativePathToFileSystem(sourcePath + importPath);
                 }
-                DependentFiles.Add(import);
+                bundleState.DependentFiles.Add(import);
                 return ProcessCssFile(import, outputFile, true);
             });
         }
@@ -130,62 +105,54 @@ namespace SquishIt.Framework.Css
             return this;
         }
 
-        protected override string BeforeMinify(string outputFile, List<string> filePaths, IEnumerable<string> arbitraryContent)
+        protected override void AggregateContent(List<Asset> assets, StringBuilder sb, string outputFile)
         {
-            var outputCss = new StringBuilder();
-
-            filePaths.Select(file => ProcessCssFile (file, outputFile))
-                .Concat(arbitraryContent)
-                .Aggregate(outputCss, (builder, val) => builder.Append(val + "\n"));
-
-            return outputCss.ToString();
+            assets.SelectMany(a => a.IsArbitrary
+                                       ? new[] { PreprocessArbitrary(a) }.AsEnumerable()
+                                       : GetFilesForSingleAsset(a).Select(f => ProcessFile(f, outputFile, a.Minify)))
+                .ToList()
+                .Distinct()
+                .Aggregate(sb, (b, s) =>
+                                   {
+                                       b.Append(s);
+                                       return b;
+                                   });
         }
 
-        string ProcessCssFile(string file, string outputFile, bool asImport = false) 
+        protected override string ProcessFile(string file, string outputFile, bool minify)
+        {
+            return MinifyIfNeeded(ProcessCssFile(file, outputFile), minify);
+        }
+
+        string ProcessCssFile(string file, string outputFile, bool asImport = false)
         {
             string css = null;
-            if (file.ToLower().EndsWith(".less") || file.ToLower().EndsWith(".less.css"))
+
+            var preprocessors = FindPreprocessors(file);
+
+            if(preprocessors.NullSafeAny())
             {
-                css = ProcessLess(file);
+                css = PreprocessFile(file, preprocessors);
             }
             else
             {
                 css = ReadFile(file);
             }
 
-            if (ShouldImport)
+            if(ShouldImport)
             {
                 css = ProcessImport(file, outputFile, css);
             }
 
             ICssAssetsFileHasher fileHasher = null;
 
-            if (ShouldAppendHashForAssets)
+            if(ShouldAppendHashForAssets)
             {
                 var fileResolver = new FileSystemResolver();
-                fileHasher = new CssAssetsFileHasher(HashKeyName, fileResolver, hasher);
+                fileHasher = new CssAssetsFileHasher(bundleState.HashKeyName, fileResolver, hasher);
             }
 
             return CSSPathRewriter.RewriteCssPaths(outputFile, file, css, fileHasher, asImport);
-        }
-
-        internal override void BeforeRenderDebug()
-        {
-            foreach (var asset in bundleState.Assets)
-            {
-                var localPath = asset.LocalPath;
-                if (localPath.ToLower().EndsWith(".less") || localPath.ToLower().EndsWith(".less.css"))
-                {
-                    string outputFile = FileSystem.ResolveAppRelativePathToFileSystem(localPath);
-                    string css = ProcessLess(outputFile);
-                    outputFile += ".debug.css";
-                    using (var fileWriter = fileWriterFactory.GetFileWriter(outputFile))
-                    {
-                        fileWriter.Write(css);
-                    }
-                    asset.LocalPath = localPath + ".debug.css";
-                }
-            }
         }
     }
 }

@@ -22,17 +22,22 @@ namespace SquishIt.Framework
 
             if (HttpContext.Current == null)
             {
-                if (!(Unix))
-                {
-                    file = file.Replace("/", "\\").TrimStart('~').TrimStart('\\');
-                }
-                else
-                {
-                    file = file.TrimStart('~', '/');
-                }
-                return Path.Combine(Environment.CurrentDirectory, file);
+                return ProcessWithoutHttpContext(file);
             }
             return HttpContext.Current.Server.MapPath(file);
+        }
+
+        static string ProcessWithoutHttpContext(string file)
+        {
+            if(!(Unix))
+            {
+                file = file.Replace("/", "\\").TrimStart('~').TrimStart('\\');
+            }
+            else
+            {
+                file = file.TrimStart('~', '/');
+            }
+            return Path.Combine(Environment.CurrentDirectory, file);
         }
 
         public static string ResolveFileSystemPathToAppRelative(string file)
@@ -46,7 +51,7 @@ namespace SquishIt.Framework
             {
                 var root = new Uri(Environment.CurrentDirectory);
                 var path = root.MakeRelativeUri(new Uri(file, UriKind.RelativeOrAbsolute)).ToString();
-                return path.Substring(path.IndexOf("/") + 1);
+                return path.Substring(path.IndexOf("/", StringComparison.InvariantCulture) + 1);
             }
         }
     }

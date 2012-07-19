@@ -7,7 +7,7 @@ namespace SquishIt.Framework.Resolvers
 {
     public class FileSystemResolver : IResolver
     {
-        public string TryResolve(string path) 
+        public string Resolve(string path) 
         {
             return Path.GetFullPath(path);
         }
@@ -17,18 +17,29 @@ namespace SquishIt.Framework.Resolvers
             return Directory.Exists(path);
         }
 
-        public IEnumerable<string> TryResolveFolder(string path, bool recursive, IEnumerable<string> allowedFileExtensions)
+        public IEnumerable<string> ResolveFolder(string path, bool recursive, string debugFileExtension, IEnumerable<string> allowedFileExtensions, IEnumerable<string> disallowedFileExtensions)
         {
             if (IsDirectory(path)) 
             {
               var files = Directory.GetFiles(path, "*.*", recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly)
                     .Where(
-                        f => allowedFileExtensions == null || allowedFileExtensions.Any(x => f.EndsWith(x, StringComparison.InvariantCultureIgnoreCase)))
+                        f => !f.ToUpperInvariant().EndsWith(debugFileExtension.ToUpperInvariant())
+                            && 
+                            (allowedFileExtensions == null || allowedFileExtensions.Select(s => s.ToUpper()).Any(x => Extensions(f).Contains(x))
+                            &&
+                            (disallowedFileExtensions == null || !disallowedFileExtensions.Select(s => s.ToUpper()).Any(x => Extensions(f).Contains(x)))))
                     .ToArray();
                 Array.Sort(files);
                 return files;
             }
             return new[] { Path.GetFullPath(path) };
+        }
+
+        static IEnumerable<string> Extensions(string path)
+        {
+            return path.Split('.')
+                .Skip(1)
+                .Select(s => "." + s.ToUpperInvariant());
         }
     }
 }

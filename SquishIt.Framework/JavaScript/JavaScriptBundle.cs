@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Text;
 using SquishIt.Framework.Base;
@@ -11,28 +10,36 @@ namespace SquishIt.Framework.JavaScript
 {
     public class JavaScriptBundle : BundleBase<JavaScriptBundle>
     {
-        private const string JS_TEMPLATE = "<script type=\"text/javascript\" {0}src=\"{1}\" defer></script>";
-        private const string TAG_FORMAT = "<script type=\"text/javascript\">{0}</script>";
+        const string JS_TEMPLATE = "<script type=\"text/javascript\" {0}src=\"{1}\" defer></script>";
+        const string TAG_FORMAT = "<script type=\"text/javascript\">{0}</script>";
 
-        private const string CACHE_PREFIX = "js";
+        const string CACHE_PREFIX = "js";
 
-        private bool deferred;
+        bool deferred;
 
         protected override IMinifier<JavaScriptBundle> DefaultMinifier
         {
-            get { return Configuration.DefaultJsMinifier(); }
+            get { return Configuration.Instance.DefaultJsMinifier(); }
         }
 
-        private HashSet<string> _allowedExtensions = new HashSet<string> { ".JS", ".COFFEE" };
-
-        protected override HashSet<string> allowedExtensions
+        protected override IEnumerable<string> allowedExtensions
         {
-            get { return _allowedExtensions; }
+            get { return bundleState.AllowedExtensions.Union(Bundle.AllowedGlobalExtensions.Union(Bundle.AllowedScriptExtensions)); }
+        }
+
+        protected override IEnumerable<string> disallowedExtensions
+        {
+            get { return Bundle.AllowedStyleExtensions; }
+        }
+
+        protected override string defaultExtension
+        {
+            get { return ".JS"; }
         }
 
         protected override string tagFormat
         {
-            get { return typeless ? TAG_FORMAT.Replace(" type=\"text/javascript\"", "") : TAG_FORMAT; }
+            get { return bundleState.Typeless ? TAG_FORMAT.Replace(" type=\"text/javascript\"", "") : TAG_FORMAT; }
         }
 
         public JavaScriptBundle()
@@ -48,7 +55,7 @@ namespace SquishIt.Framework.JavaScript
         {
             get
             {
-                var val = typeless ? JS_TEMPLATE.Replace("type=\"text/javascript\" ", "") : JS_TEMPLATE;
+                var val = bundleState.Typeless ? JS_TEMPLATE.Replace("type=\"text/javascript\" ", "") : JS_TEMPLATE;
                 return deferred ? val : val.Replace(" defer", "");
             }
         }
@@ -58,53 +65,39 @@ namespace SquishIt.Framework.JavaScript
             get { return CACHE_PREFIX; }
         }
 
-        internal override void BeforeRenderDebug()
+        protected override string ProcessFile(string file, string outputFile, bool minify)
         {
-            foreach(var asset in bundleState.Assets)
+            var preprocessors = FindPreprocessors(file);
+            if(preprocessors.NullSafeAny())
             {
-                var localPath = asset.LocalPath;
-                if(localPath.ToLower().EndsWith(".coffee"))
-                {
-                    string outputFile = FileSystem.ResolveAppRelativePathToFileSystem(localPath);
-                    string javascript = ProcessCoffee(outputFile);
-                    outputFile += ".debug.js";
-                    using(var fileWriter = fileWriterFactory.GetFileWriter(outputFile))
-                    {
-                        fileWriter.Write(javascript);
-                    }
-
-                    asset.LocalPath = localPath + ".debug.js";
-                }
+                return MinifyIfNeeded(PreprocessFile(file, preprocessors), minify);
             }
+            return MinifyIfNeeded(ReadFile(file), minify);
         }
 
-        protected override string BeforeMinify(string outputFile, List<string> files, IEnumerable<string> arbitraryContent)
+        protected override void AggregateContent(List<Asset> assets, StringBuilder sb, string outputFile)
         {
-            var sb = new StringBuilder();
-
-            files.Select(file => file.EndsWith(".coffee") ? ProcessCoffee(file) : ReadFile(file))
-                .Concat(arbitraryContent)
-                .Aggregate(sb, (builder, val) => builder.Append(val + "\n"));
-
-            return sb.ToString();
+            assets.SelectMany(a => a.IsArbitrary
+                                       ? new[] { PreprocessArbitrary(a) }.AsEnumerable()
+                                       : GetFilesForSingleAsset(a).Select(f => ProcessFile(f, outputFile, a.Minify)))
+                .ToList()
+                .Distinct()
+                .Aggregate(sb, (b, s) =>
+                {
+                    b.Append(s);
+                    return b;
+                });
         }
 
-        private string ProcessCoffee(string file)
+        const string MINIFIED_FILE_SEPARATOR = ";";
+        
+        protected override string AppendFileClosure(string content)
         {
-            lock(typeof(JavaScriptBundle))
+            if (!(content.Trim().EndsWith(MINIFIED_FILE_SEPARATOR)))
             {
-                try
-                {
-                    currentDirectoryWrapper.SetCurrentDirectory(Path.GetDirectoryName(file));
-                    var content = ReadFile(file);
-                    var compiler = new Coffee.CoffeescriptCompiler();
-                    return compiler.Compile(content);
-                }
-                finally
-                {
-                    currentDirectoryWrapper.Revert();
-                }
+                content += MINIFIED_FILE_SEPARATOR;
             }
+            return content;
         }
 
         public JavaScriptBundle WithDeferredLoad()
