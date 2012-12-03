@@ -5,7 +5,7 @@ using System.Text;
 using System.Web.UI.WebControls;
 using System.Web.UI;
 using SquishIt.Framework.Utilities;
-using SquishIt.Framework.Css;
+using SquishIt.Framework.CSS;
 using SquishIt.Framework.Files;
 using System.IO;
 
