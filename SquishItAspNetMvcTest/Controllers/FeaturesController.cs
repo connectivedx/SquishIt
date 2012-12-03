@@ -28,12 +28,27 @@ namespace SquishItAspNetMvcTest.Controllers
             return View();
         }
 
+        public ActionResult ProcessImports()
+        {
+            return View();
+        }
+
         public ActionResult Folders()
         {
             return View();
         }
 
         public ActionResult RecursiveFolders()
+        {
+            return View();
+        }
+
+        public ActionResult EmbeddedResource()
+        {
+            return View();
+        }
+
+        public ActionResult RootEmbeddedResource()
         {
             return View();
         }

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using SquishIt.Framework.Minifiers;
-using SquishIt.Framework.Minifiers.CSS;
 using SquishIt.Framework.Renderers;
 using SquishIt.Framework.Files;
 using SquishIt.Framework.Utilities;
@@ -23,39 +22,48 @@ namespace SquishIt.Framework.Base
         protected abstract IEnumerable<string> disallowedExtensions { get; }
         protected abstract string defaultExtension { get; }
         protected string debugExtension { get { return ".squishit.debug" + defaultExtension.ToLowerInvariant(); } }
-        protected abstract string ProcessFile(string file, string outputFile, bool minify);
+        protected abstract string ProcessFile(string file, string outputFile, Asset originalAsset);
 
-        internal BundleState bundleState = new BundleState();
+        internal BundleState bundleState;
         readonly IBundleCache bundleCache;
-        protected string BaseOutputHref = Configuration.Instance.DefaultOutputBaseHref() ?? String.Empty;
+        protected string BaseOutputHref = Configuration.Instance.DefaultOutputBaseHref();
         protected IFileWriterFactory fileWriterFactory;
         protected IFileReaderFactory fileReaderFactory;
         protected IDebugStatusReader debugStatusReader;
-        protected ICurrentDirectoryWrapper currentDirectoryWrapper;
+        protected IDirectoryWrapper directoryWrapper;
         protected IHasher hasher;
         IMinifier<T> minifier;
-
+ 
         protected IMinifier<T> Minifier
         {
             get { return minifier ?? DefaultMinifier; }
             set { minifier = value; }
         }
 
-        protected BundleBase(IFileWriterFactory fileWriterFactory, IFileReaderFactory fileReaderFactory, IDebugStatusReader debugStatusReader, ICurrentDirectoryWrapper currentDirectoryWrapper, IHasher hasher, IBundleCache bundleCache)
+        protected BundleBase(IFileWriterFactory fileWriterFactory, IFileReaderFactory fileReaderFactory, IDebugStatusReader debugStatusReader, IDirectoryWrapper directoryWrapper, IHasher hasher, IBundleCache bundleCache)
         {
             this.fileWriterFactory = fileWriterFactory;
             this.fileReaderFactory = fileReaderFactory;
             this.debugStatusReader = debugStatusReader;
-            this.currentDirectoryWrapper = currentDirectoryWrapper;
+            this.directoryWrapper = directoryWrapper;
             this.hasher = hasher;
-            bundleState.ShouldRenderOnlyIfOutputFileIsMissing = false;
-            bundleState.HashKeyName = "r";
+            bundleState = new BundleState
+                              {
+                                  DebugPredicate = Configuration.Instance.DefaultDebugPredicate(),
+                                  ShouldRenderOnlyIfOutputFileIsMissing = false,
+                                  HashKeyName = "r"
+                              };
             this.bundleCache = bundleCache;
+        }
+
+        protected bool IsDebuggingEnabled()
+        {
+            return debugStatusReader.IsDebuggingEnabled(bundleState.DebugPredicate);
         }
 
         protected IRenderer GetFileRenderer()
         {
-            return debugStatusReader.IsDebuggingEnabled() ? new FileRenderer(fileWriterFactory) :
+            return IsDebuggingEnabled() ? new FileRenderer(fileWriterFactory) :
                 bundleState.ReleaseFileRenderer ??
                 Configuration.Instance.DefaultReleaseRenderer() ??
                 new FileRenderer(fileWriterFactory);
@@ -122,7 +130,7 @@ namespace SquishIt.Framework.Base
 
         T AddString(string content, string extension, bool minify)
         {
-            if(!bundleState.Assets.Any(ac => ac.Content == content))
+            if(bundleState.Assets.All(ac => ac.Content != content))
                 bundleState.Assets.Add(new Asset { Content = content, Extension = extension, Minify = minify });
             return (T)this;
         }
@@ -161,6 +169,12 @@ namespace SquishIt.Framework.Base
             return AddRemote(siteRelativePath, absolutePath, true);
         }
 
+        public T AddRootEmbeddedResource(string localPath, string embeddedResourcePath)
+        {
+            AddAsset(new Asset { LocalPath = localPath, RemotePath = embeddedResourcePath, Order = 0, IsEmbeddedResource = true, IsEmbeddedInRootNamespace = true });
+            return (T)this;
+        }
+
         public T AddEmbeddedResource(string localPath, string embeddedResourcePath)
         {
             AddAsset(new Asset { LocalPath = localPath, RemotePath = embeddedResourcePath, Order = 0, IsEmbeddedResource = true });
@@ -177,6 +191,12 @@ namespace SquishIt.Framework.Base
         {
             debugStatusReader.ForceDebug();
             bundleState.ForceDebug = true;
+            return (T)this;
+        }
+
+        public T ForceDebugIf(Func<bool> predicate)
+        {
+            bundleState.DebugPredicate = predicate;
             return (T)this;
         }
 
@@ -307,17 +327,22 @@ namespace SquishIt.Framework.Base
         public string RenderNamed(string name)
         {
             bundleState = GetCachedBundleState(name);
-            //TODO: this sucks
-            // Revisit https://github.com/jetheredge/SquishIt/pull/155 and https://github.com/jetheredge/SquishIt/issues/183
-            //hopefully we can find a better way to satisfy both of these requirements
-            var fullName = (BaseOutputHref ?? "") + CachePrefix + name;
-            var content = bundleCache.GetContent(fullName);
-            if(content == null)
+
+            if (!bundleState.DebugPredicate.SafeExecute())
             {
-                AsNamed(name, bundleState.Path);
-                return bundleCache.GetContent(CachePrefix + name);
+                //TODO: this sucks
+                // Revisit https://github.com/jetheredge/SquishIt/pull/155 and https://github.com/jetheredge/SquishIt/issues/183
+                //hopefully we can find a better way to satisfy both of these requirements
+                var fullName = (BaseOutputHref ?? "") + CachePrefix + name;
+                var content = bundleCache.GetContent(fullName);
+                if (content == null)
+                {
+                    AsNamed(name, bundleState.Path);
+                    return bundleCache.GetContent(CachePrefix + name);
+                }
+                return content;
             }
-            return content;
+            return RenderDebug(bundleState.Path, name, GetFileRenderer());
         }
 
         public string RenderCached(string name)

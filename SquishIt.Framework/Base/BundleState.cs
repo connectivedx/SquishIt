@@ -26,6 +26,8 @@ namespace SquishIt.Framework.Base
 
         internal IRenderer ReleaseFileRenderer { get; set; }
 
+        internal Func<bool> DebugPredicate { get; set; }
+
         internal BundleState()
         { 
         }
@@ -37,7 +39,7 @@ namespace SquishIt.Framework.Base
 
         internal void AddPreprocessor(IPreprocessor instance)
         {
-            if(!Preprocessors.Any(ipp => ipp.GetType() == instance.GetType()))
+            if(Preprocessors.All(ipp => ipp.GetType() != instance.GetType()))
             {
                 foreach(var extension in instance.Extensions)
                 {

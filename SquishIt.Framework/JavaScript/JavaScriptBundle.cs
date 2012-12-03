@@ -43,13 +43,13 @@ namespace SquishIt.Framework.JavaScript
         }
 
         public JavaScriptBundle()
-            : base(new FileWriterFactory(new RetryableFileOpener(), 5), new FileReaderFactory(new RetryableFileOpener(), 5), new DebugStatusReader(), new CurrentDirectoryWrapper(), new Hasher(new RetryableFileOpener()), new BundleCache()) { }
+            : this(new DebugStatusReader()) { }
 
         public JavaScriptBundle(IDebugStatusReader debugStatusReader)
-            : base(new FileWriterFactory(new RetryableFileOpener(), 5), new FileReaderFactory(new RetryableFileOpener(), 5), debugStatusReader, new CurrentDirectoryWrapper(), new Hasher(new RetryableFileOpener()), new BundleCache()) { }
+            : this(debugStatusReader, new FileWriterFactory(new RetryableFileOpener(), 5), new FileReaderFactory(new RetryableFileOpener(), 5), new DirectoryWrapper(), new Hasher(new RetryableFileOpener()), new BundleCache()) { }
 
-        public JavaScriptBundle(IDebugStatusReader debugStatusReader, IFileWriterFactory fileWriterFactory, IFileReaderFactory fileReaderFactory, ICurrentDirectoryWrapper currentDirectoryWrapper, IHasher hasher, IBundleCache bundleCache) :
-            base(fileWriterFactory, fileReaderFactory, debugStatusReader, currentDirectoryWrapper, hasher, bundleCache) { }
+        public JavaScriptBundle(IDebugStatusReader debugStatusReader, IFileWriterFactory fileWriterFactory, IFileReaderFactory fileReaderFactory, IDirectoryWrapper directoryWrapper, IHasher hasher, IBundleCache bundleCache) :
+            base(fileWriterFactory, fileReaderFactory, debugStatusReader, directoryWrapper, hasher, bundleCache) { }
 
         protected override string Template
         {
@@ -65,21 +65,19 @@ namespace SquishIt.Framework.JavaScript
             get { return CACHE_PREFIX; }
         }
 
-        protected override string ProcessFile(string file, string outputFile, bool minify)
+        protected override string ProcessFile(string file, string outputFile, Asset originalAsset)
         {
             var preprocessors = FindPreprocessors(file);
-            if(preprocessors.NullSafeAny())
-            {
-                return MinifyIfNeeded(PreprocessFile(file, preprocessors), minify);
-            }
-            return MinifyIfNeeded(ReadFile(file), minify);
+            return MinifyIfNeeded(preprocessors.NullSafeAny() 
+                ? PreprocessFile(file, preprocessors) 
+                : ReadFile(file), originalAsset.Minify);
         }
 
         protected override void AggregateContent(List<Asset> assets, StringBuilder sb, string outputFile)
         {
             assets.SelectMany(a => a.IsArbitrary
                                        ? new[] { PreprocessArbitrary(a) }.AsEnumerable()
-                                       : GetFilesForSingleAsset(a).Select(f => ProcessFile(f, outputFile, a.Minify)))
+                                       : GetFilesForSingleAsset(a).Select(f => ProcessFile(f, outputFile, a)))
                 .ToList()
                 .Distinct()
                 .Aggregate(sb, (b, s) =>

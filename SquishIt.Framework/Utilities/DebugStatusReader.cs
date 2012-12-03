@@ -1,5 +1,4 @@
 using System;
-using System.Web;
 
 namespace SquishIt.Framework.Utilities
 {
@@ -21,9 +20,9 @@ namespace SquishIt.Framework.Utilities
             this.machineConfigReader = machineConfigReader;
         }
 
-        public bool IsDebuggingEnabled()
+        public bool IsDebuggingEnabled(Func<bool> debugPredicate = null)
         {
-            if(forceDebug)
+            if(forceDebug || debugPredicate.SafeExecute())
             {
                 return true;
             }
@@ -35,7 +34,7 @@ namespace SquishIt.Framework.Utilities
 
             if(HttpContext.Current != null && HttpContext.Current.IsDebuggingEnabled)
             {
-                return !TrustLevel.IsHighOrUnrestrictedTrust || machineConfigReader.IsRetailDeployment;
+                return !TrustLevel.IsHighOrUnrestrictedTrust || machineConfigReader.IsNotRetailDeployment;
             }
             return false;
         }

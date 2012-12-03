@@ -92,17 +92,19 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssetsFileHasherTests.cs" />
+    <Compile Include="CoffeescriptCompilerTests.cs" />
     <Compile Include="CoffeeScriptTests.cs" />
+    <Compile Include="HasherTests.cs" />
     <Compile Include="HoganTests.cs" />
     <Compile Include="ScriptPreprocessorPipelineTests.cs" />
     <Compile Include="CriticalRenderingSectionTest.cs" />
-    <Compile Include="CssBundleTests.cs" />
-    <Compile Include="CssMinifierTests.cs" />
-    <Compile Include="CssPathRewriterTests.cs" />
+    <Compile Include="CSSBundleTests.cs" />
+    <Compile Include="CSSMinifierTests.cs" />
+    <Compile Include="CSSPathRewriterTests.cs" />
     <Compile Include="DebugStatusReaderTest.cs" />
     <Compile Include="Helpers\FilePathMutexProviderScope.cs" />
     <Compile Include="Helpers\JavaScriptBundleFactory.cs" />
-    <Compile Include="Helpers\CssBundleFactory.cs" />
+    <Compile Include="Helpers\CSSBundleFactory.cs" />
     <Compile Include="Helpers\ResolverFactoryScope.cs" />
     <Compile Include="Helpers\TrustLevelScope.cs" />
     <Compile Include="Helpers\HttpContextScope.cs" />
@@ -115,7 +117,7 @@
     <Compile Include="SassTests.cs" />
     <Compile Include="Stubs\PreprocessorScope.cs" />
     <Compile Include="Stubs\StubBundleCache.cs" />
-    <Compile Include="Stubs\StubCurrentDirectoryWrapper.cs" />
+    <Compile Include="Stubs\StubDirectoryWrapper.cs" />
     <Compile Include="Stubs\StubDebugStatusReader.cs" />
     <Compile Include="Stubs\StubFileReader.cs" />
     <Compile Include="Stubs\StubFileReaderFactory.cs" />
@@ -144,6 +146,10 @@
     <ProjectReference Include="..\SquishIt.Less\SquishIt.Less.csproj">
       <Project>{A8E60378-569B-4BAA-B344-75A065796E20}</Project>
       <Name>SquishIt.Less</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\SquishIt.MsIeCoffeeScript\SquishIt.MsIeCoffeeScript.csproj">
+      <Project>{92AC834F-D187-4ECF-B509-96CFFEA3397F}</Project>
+      <Name>SquishIt.MsIeCoffeeScript</Name>
     </ProjectReference>
     <ProjectReference Include="..\SquishIt.Sass\SquishIt.Sass.csproj">
       <Project>{EC304F39-5916-45ED-A289-ABEFF1EDD070}</Project>
@@ -175,6 +181,16 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="EmbeddedResource\RootEmbedded.css">
+      <LogicalName>RootEmbedded.css</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="EmbeddedResource\RootEmbedded.js">
+      <LogicalName>RootEmbedded.js</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

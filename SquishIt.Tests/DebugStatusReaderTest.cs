@@ -45,6 +45,25 @@ namespace SquishIt.Tests
             machineConfigReader.VerifyAll();
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Predicate(bool predicateReturn)
+        {
+            //shouldn't touch anything on these
+            var httpContext = new Mock<HttpContextBase>(MockBehavior.Strict);
+            var machineConfigReader = new Mock<IMachineConfigReader>(MockBehavior.Strict);
+
+            using (new HttpContextScope(httpContext.Object))
+            {
+                var reader = new DebugStatusReader(machineConfigReader.Object);
+                reader.ForceRelease();
+                Assert.AreEqual(predicateReturn, reader.IsDebuggingEnabled(() => predicateReturn));
+            }
+
+            httpContext.VerifyAll();
+            machineConfigReader.VerifyAll();
+        }
+
         [Test]
         public void NullHttpContext()
         {
@@ -81,7 +100,7 @@ namespace SquishIt.Tests
             var machineConfigReader = new Mock<IMachineConfigReader>(MockBehavior.Strict);
 
             httpContext.SetupGet(hc => hc.IsDebuggingEnabled).Returns(true);
-            machineConfigReader.SetupGet(mcr => mcr.IsRetailDeployment).Returns(configReaderValue);
+            machineConfigReader.SetupGet(mcr => mcr.IsNotRetailDeployment).Returns(configReaderValue);
 
             using(new HttpContextScope(httpContext.Object))
             {
@@ -127,7 +146,7 @@ namespace SquishIt.Tests
 
             httpContext.SetupGet(hc => hc.IsDebuggingEnabled).Returns(true);
             trustLevel.SetupGet(tl => tl.CurrentTrustLevel).Returns(permissionLevel);
-            machineConfigReader.SetupGet(tl => tl.IsRetailDeployment).Returns(false);
+            machineConfigReader.SetupGet(tl => tl.IsNotRetailDeployment).Returns(false);
 
             using(new TrustLevelScope(trustLevel.Object))
             using(new HttpContextScope(httpContext.Object))
