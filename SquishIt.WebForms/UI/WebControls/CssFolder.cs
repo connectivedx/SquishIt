@@ -29,7 +29,7 @@ namespace SquishIt.WebForms.UI.WebControls
 				foreach (var fileName in fileNames)
 				{
 					extension = Path.GetExtension(fileName);
-					if(extension.Equals(".css", StringComparison.OrdinalIgnoreCase) || extension.Equals(".less", StringComparison.OrdinalIgnoreCase))
+					if(extension.Equals(".css", StringComparison.OrdinalIgnoreCase) || extension.Equals(".less", StringComparison.OrdinalIgnoreCase) || extension.Equals(".scss", StringComparison.OrdinalIgnoreCase))
 						files.Add(new CssFile() { Path = string.Concat(FolderPath, "/", Path.GetFileName(fileName)) });
 				}
 
