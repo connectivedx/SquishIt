@@ -28,6 +28,9 @@ namespace SquishIt.WebForms.UI.WebControls
 				string extension;
 				foreach (var fileName in fileNames)
 				{
+					// ignore debug preprocessor files eg .debug.css files from scss in debug mode
+					if (fileName.Contains("squishit.debug")) continue;
+
 					extension = Path.GetExtension(fileName);
 					if(extension.Equals(".css", StringComparison.OrdinalIgnoreCase) || extension.Equals(".less", StringComparison.OrdinalIgnoreCase) || extension.Equals(".scss", StringComparison.OrdinalIgnoreCase))
 						files.Add(new CssFile() { Path = string.Concat(FolderPath, "/", Path.GetFileName(fileName)) });

@@ -28,6 +28,9 @@ namespace SquishIt.WebForms.UI.WebControls
 				string extension;
 				foreach (var fileName in fileNames)
 				{
+					// ignore debug preprocessor files eg .debug.js files from coffeescript processor in debug mode
+					if (fileName.Contains("squishit.debug")) continue;
+
 					extension = Path.GetExtension(fileName);
 					if (extension.Equals(".js", StringComparison.OrdinalIgnoreCase) || extension.Equals(".coffee", StringComparison.OrdinalIgnoreCase))
 						files.Add(new JsFile() { Path = string.Concat(FolderPath, "/", Path.GetFileName(fileName)) });
