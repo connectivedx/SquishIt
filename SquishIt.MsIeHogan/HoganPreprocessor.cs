@@ -2,10 +2,10 @@
 using System.Linq;
 using System.Text;
 using SquishIt.Framework.Base;
-using SquishIt.Hogan.Hogan;
 using SquishIt.Framework;
+using SquishIt.MsIeHogan.Hogan;
 
-namespace SquishIt.Hogan
+namespace SquishIt.MsIeHogan
 {
     public class HoganPreprocessor : Preprocessor
     {
