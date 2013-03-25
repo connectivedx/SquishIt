@@ -28,6 +28,9 @@ namespace SquishIt.WebForms.UI.WebControls
 				string extension;
 				foreach (var fileName in fileNames)
 				{
+					// ignore include files (_*)
+					if (Path.GetFileName(fileName).StartsWith("_")) continue;
+
 					// ignore debug preprocessor files eg .debug.js files from coffeescript processor in debug mode
 					if (fileName.Contains("squishit.debug")) continue;
 
