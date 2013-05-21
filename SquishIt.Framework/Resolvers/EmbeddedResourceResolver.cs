@@ -2,21 +2,36 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.IO;
+using System.Reflection;
+using SquishIt.Framework.Utilities;
 
 namespace SquishIt.Framework.Resolvers
 {
     public abstract class EmbeddedResourceResolver : IResolver
     {
         protected abstract string CalculateResourceName(string assemblyName, string resourceName); 
+
         public string Resolve(string file)
         {
             var split = file.Split(new[] { "://" }, StringSplitOptions.None);
             var assemblyName = split.ElementAt(0);
             var assembly = AppDomain.CurrentDomain.GetAssemblies().SingleOrDefault(x => x.GetName().Name == assemblyName);
             var resourceName = CalculateResourceName(assemblyName, split.ElementAt(1));
+
+            string resolved;
+            if (TempFileResolutionCache.TryGetValue(resourceName, out resolved))
+            {
+                return resolved;
+            }
+            return ResolveFile(file, assembly, resourceName);
+        }
+
+        static string ResolveFile(string file, Assembly assembly, string resourceName)
+        {
             using (var stream = assembly.GetManifestResourceStream(resourceName))
             {
-                if (stream == null) throw new InvalidOperationException(String.Format("Embedded resource not found: {0}", file));
+                if (stream == null)
+                    throw new InvalidOperationException(String.Format("Embedded resource not found: {0}", file));
 
                 string contents;
                 using (var sr = new StreamReader(stream))
@@ -29,6 +44,7 @@ namespace SquishIt.Framework.Resolvers
                 {
                     sw.Write(contents);
                 }
+                TempFileResolutionCache.Add(resourceName, fileName);
                 return fileName;
             }
         }

@@ -69,6 +69,12 @@ namespace SquishIt.Tests
         }
 
         [Test]
+        public void CanRenderEmptyBundle_WithHashInFilename()
+        {
+            cssBundleFactory.Create().Render("~/css/output_#.css");
+        }
+
+        [Test]
         public void CanBundleCss()
         {
             CSSBundle cssBundle = cssBundleFactory
@@ -408,7 +414,7 @@ background:url(images/button-loader.gif) #ccc;
                 .Create();
 
             string tag = cssBundle
-                            .AddRootEmbeddedResource("~/js/test.css", "SquishIt.Tests://RootEmbedded.css")
+                            .AddRootEmbeddedResource("~/css/test.css", "SquishIt.Tests://RootEmbedded.css")
                             .Render("/css/output_embedded.css");
 
             Assert.AreEqual("<link rel=\"stylesheet\" type=\"text/css\" href=\"/css/output_embedded.css?r=hash\" />", tag);
