@@ -19,3 +19,6 @@ SquishItAspNetMvcTest/templates/templates_*
 *.squishit.debug.css
 *.squishit.debug.js
 SquishItAspNetMvcTest/output/
+
+packages
+!packages/repositories.config

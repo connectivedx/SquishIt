@@ -69,7 +69,7 @@ namespace SquishIt.Sass
 
     public class ResourceAwarePAL : PlatformAdaptationLayer
     {
-        public override Stream OpenInputFileStream(string path)
+		public override Stream OpenInputFileStream(string path, FileMode mode = FileMode.Open, FileAccess access = FileAccess.Read, FileShare share = FileShare.Read, int bufferSize = 8192)
         {
             var ret = Assembly.GetExecutingAssembly().GetManifestResourceStream(pathToResourceName(path));
             if (ret != null)
@@ -82,7 +82,7 @@ namespace SquishIt.Sass
                 return null;
             }
 
-            return base.OpenInputFileStream(path);
+            return base.OpenInputFileStream(path, mode, access, share, bufferSize);
         }
 
         public override bool FileExists(string path)
