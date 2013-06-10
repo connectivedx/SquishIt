@@ -30,6 +30,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <PlatformTarget>AnyCPU</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -80,7 +81,9 @@
     <Content Include="assets\js\hogan\hogan-2.0.0.js" />
     <Content Include="assets\js\jquery_1.7.2.js" />
     <Content Include="assets\templates\hogan\template1.hogan.html" />
-    <Content Include="Web.config" />
+    <Content Include="Web.config">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="Web.Debug.config">
       <DependentUpon>Web.config</DependentUpon>
     </Content>
@@ -101,6 +104,8 @@
     <Content Include="Views\Features\RootEmbeddedResource.cshtml" />
     <Content Include="Views\Features\EmbeddedResource.cshtml" />
     <Content Include="Views\Features\ProcessImports.cshtml" />
+    <Content Include="Views\Features\HashInFileName.cshtml" />
+    <Content Include="Views\Features\HashAsVirtualDirectory.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Views\Preprocessors\Hogan.cshtml" />
@@ -171,7 +176,7 @@
     <VisualStudio>
       <FlavorProperties GUID="{349c5851-65df-11da-9384-00065b846f21}">
         <WebProjectProperties>
-          <UseIIS>False</UseIIS>
+          <UseIIS>True</UseIIS>
           <AutoAssignPort>True</AutoAssignPort>
           <DevelopmentServerPort>33627</DevelopmentServerPort>
           <DevelopmentServerVPath>/</DevelopmentServerVPath>
